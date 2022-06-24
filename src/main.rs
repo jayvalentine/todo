@@ -16,6 +16,12 @@ struct Task {
     description: String
 }
 
+impl Task {
+    fn set_state(&mut self, s: TaskState) {
+        self.state = s;
+    }
+}
+
 enum TaskParseError {
     InvalidState,
     NoState
@@ -74,6 +80,26 @@ fn do_new<T: Iterator<Item = String>>(project: &mut Project, args: T) {
     project.0.push(Task { state, description });
 }
 
+fn do_done<T: Iterator<Item = String>>(project: &mut Project, args: T) {
+    // Get description.
+    let description: Vec<String> = args.collect();
+    let description = description.join(" ");
+
+    // Find matching task.
+    // This is the first task which starts with this desc.
+    let mut set = false;
+    for t in &mut project.0 {
+        if t.description.starts_with(&description) {
+            t.set_state(TaskState::Complete);
+            set = true;
+            println!("Completed task: {}", t.description);
+            break;
+        }
+    }
+
+    if !set { println!("No matching task: {}", description) }
+}
+
 fn open_project() -> Project {
     // Open the project file.
     // Create the project file if it doesn't already exist.
@@ -118,6 +144,7 @@ fn main() {
     match command.as_str() {
         "list" => do_list(&mut project, args),
         "new" => do_new(&mut project, args),
+        "done" => do_done(&mut project, args),
         _ => invalid_usage()
     };
 
